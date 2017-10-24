@@ -34,6 +34,10 @@ window.addEventListener('DOMContentLoaded', function () {
     var dino;                   // The dino mesh
     var dinoVelocity = new BABYLON.Vector3(0, 0, 0); // The direction to apply the movement velocity of dino
 
+    // UI elements
+    var startUI = new BABYLON.GUI.TextBlock();
+    var distanceCounterUI = new BABYLON.GUI.TextBlock();
+    var gameOverUI = new BABYLON.GUI.TextBlock();
 
     // Connects an xbox controller has been plugged in and and a button/trigger moved
     function onNewGamepadConnected(gamepad) {
@@ -50,7 +54,7 @@ window.addEventListener('DOMContentLoaded', function () {
                 // Game has begun
                 else {
                     // Hide "Press A to start" UI
-                    //startUI.levelVisible = false;
+                    startUI.isVisible = false;
                     begin = true;
                     // Start looping the dino walking animation
                     scene.beginAnimation(dino.skeleton, 111, 130, true, 1);
@@ -68,7 +72,7 @@ window.addEventListener('DOMContentLoaded', function () {
 
     // load the 3D engine
     var engine = new BABYLON.Engine(canvas, true);
-
+    
 
     // Creates and return the scene
     var createScene = function () {
@@ -107,17 +111,44 @@ window.addEventListener('DOMContentLoaded', function () {
         skyboxMaterial.disableLighting = true;
         skybox.material = skyboxMaterial;
 
-        var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
-
         // GUI
         var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+  
+        // Distance counter UI
+        distanceCounterUI.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        distanceCounterUI.color = "red";
+        distanceCounterUI.fontSize = 24;
+        advancedTexture.addControl(distanceCounterUI); 
+        distanceCounterUI.isVisible = false;  
 
-        var text1 = new BABYLON.GUI.TextBlock();
-        text1.text = "Hello world";
-        text1.color = "white";
-        text1.fontSize = 24;
-        advancedTexture.addControl(text1);    
+        // Game over UI
+        gameOverUI = new BABYLON.GUI.Rectangle("start");
+        gameOverUI.background = "black"
+        gameOverUI.alpha = .8;
+        gameOverUI.thickness = 0;
+        gameOverUI.height = "78px";
+        gameOverUI.width = "440px";
+        advancedTexture.addControl(gameOverUI); 
+        var tex1 = new BABYLON.GUI.TextBlock();
+        tex1.text = "GAME OVER";
+        tex1.color = "red";
+        tex1.fontSize = 70;
+        gameOverUI.addControl(tex1);
+        gameOverUI.isVisible = false;  
 
+
+        // Start UI
+        startUI = new BABYLON.GUI.Rectangle("start");
+        startUI.background = "black"
+        startUI.alpha = .8;
+        startUI.thickness = 0;
+        startUI.height = "60px";
+        startUI.width = "400px";
+        advancedTexture.addControl(startUI); 
+        var tex2 = new BABYLON.GUI.TextBlock();
+        tex2.text = "Stay away from the dinosaur! \n Plug in an Xbox controller and press A to start";
+        tex2.color = "white";
+        startUI.addControl(tex2); 
 
         // return the created scene
         return scene;
@@ -343,12 +374,14 @@ window.addEventListener('DOMContentLoaded', function () {
     function beginChase(distanceAway) {
         // Dino in chasing range, display the distance counter UI and point dino is player direction
         if (distanceAway < CHASERANGE) {
-            //distanceCounterUI.children[0].text = "Dino has spotted you! Distance from you: " + distanceAway;
-            //distanceCounterUI.levelVisible = true;
+            startUI.isVisible = false;
+            distanceCounterUI.text = "Dino has spotted you! Distance from you: " + distanceAway;
+            distanceCounterUI.isVisible = true;
+
             dino.lookAt(new BABYLON.Vector3(camera.position.x, dino.position.y, camera.position.z));
-            // Dino not in chasing range, make sure distance counter is hidden
+        // Dino not in chasing range, make sure distance counter is hidden
         } else {
-            //distanceCounterUI.levelVisible = false;
+            distanceCounterUI.isVisible = false;
         }
     }
 
@@ -358,8 +391,8 @@ window.addEventListener('DOMContentLoaded', function () {
     // Updates the game state and begins the ending animations for the game
     function caught() {
         // Show game over UI and hide the distance counter
-        //gameOverUI.levelVisible = true;
-        //distanceCounterUI.levelVisible = false;
+        gameOverUI.isVisible = true;
+        distanceCounterUI.isVisible = false;
 
         // Update game state
         gameOver = true;
@@ -437,15 +470,5 @@ window.addEventListener('DOMContentLoaded', function () {
     // When the window resizes, adjust the engine size
     function onWindowResize() {
         engine.resize();
-
-        // Update the width placement of 2D UI
-        //startUI.x = (window.innerWidth / 2) - (STARTX / 2);
-        //distanceCounterUI.x = (window.innerWidth / 2) - (DISTANCECOUNTERX / 2);
-        //gameOverUI.x = (window.innerWidth / 2) - (GAMEOVERX / 2);
-
-        // Update the height placememnt of 2D UI
-        //startUI.y = (window.innerHeight / 2) - (STARTY / 2);
-        //distanceCounterUI.y = window.innerHeight - DISTANCECOUNTERY;
-        //gameOverUI.y = (window.innerHeight / 2) - (GAMEOVERY / 2);
     }
 });
