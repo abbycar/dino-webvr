@@ -1,3 +1,11 @@
+var headset;
+// If a VR headset is connected, get its info
+navigator.getVRDisplays().then(function (displays) {
+    if (displays[0]) {
+        headset = displays[0];
+    }
+});
+
 window.addEventListener('DOMContentLoaded', function () {
 
     const UNITWIDTH = 90;         // Width of the cubes in the maze
@@ -89,13 +97,32 @@ window.addEventListener('DOMContentLoaded', function () {
         scene.fogColor = new BABYLON.Color3(0.9, 0.9, 0.85);
 
         // create a UniversalCamera that be controlled with gamepad or keyboard
-        camera = new BABYLON.UniversalCamera("Camera", new BABYLON.Vector3(0, 18, -45), scene);
+        if(headset){
+            // Create a WebVR camera with the trackPosition property set to false so that we can control movement with the gamepad
+            camera = new BABYLON.WebVRFreeCamera("vrcamera", new BABYLON.Vector3(0, 14, 0), scene, true, { trackPosition: false });
+            camera.deviceScaleFactor = 1;
+        } else {
+            // No headset, use universal camera
+            camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 18, -45), scene);
+        }
         camera.rotation.y += degreesToRadians(90);
 
 
         // Set the ellipsoid around the camera. This will act as the collider box for when the player runs into walls
         camera.ellipsoid = new BABYLON.Vector3(1, 9, 1);
         camera.applyGravity = true;
+
+        scene.onPointerDown = function () {
+            startUI.children[0].text = "Dino is to your right! Press A button to start. L analog stick to move.";
+            scene.onPointerDown = undefined
+            camera.attachControl(canvas, true);
+        }
+
+        // Custom input, adding Xbox controller support for left analog stick to map to keyboard arrows
+        camera.inputs.attached.keyboard.keysUp.push(211);    // Left analog up
+        camera.inputs.attached.keyboard.keysDown.push(212);  // Left analog down
+        camera.inputs.attached.keyboard.keysLeft.push(214);  // Left analog left
+        camera.inputs.attached.keyboard.keysRight.push(213); // Left analog right
 
         // Allow camera to be controlled
         camera.attachControl(canvas, true);
@@ -323,7 +350,15 @@ window.addEventListener('DOMContentLoaded', function () {
     function animate() {
 
         engine.runRenderLoop(function () {
-
+            // Determine which camera should be showing depending on whether or not the headset is presenting
+            if (headset) {
+                if (!(headset.isPresenting)) {
+                    var camera2 = new BABYLON.UniversalCamera("Camera", new BABYLON.Vector3(0, 18, -45), scene);
+                    scene.activeCamera = camera2;
+                } else {
+                    scene.activeCamera = camera;
+                }
+            }
             scene.render();
 
             // Get the change in time between the last frame and the current frame
